@@ -1,3 +1,5 @@
+{{ 'featured-products-modal.css' | asset_url | stylesheet_tag }}
+
 {{ 'component-card.css' | asset_url | stylesheet_tag }}
 {{ 'component-price.css' | asset_url | stylesheet_tag }}
 
@@ -37,6 +39,175 @@
     }
   }
 {%- endstyle -%}
+
+<style>
+  dialog.fpmi { 
+    border: none; 
+    padding: 0; 
+    width: min(918px, 92vw); 
+  }
+  dialog.fpmi::backdrop { 
+    background: rgba(0,0,0,.48); 
+  }
+  .fpmi__wrap { 
+    position: relative; 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 10px; 
+    padding: 40px; 
+    background: var(--color-background, #fff); 
+    color: #1C1B1F;
+  }
+  .fpmi__close { 
+    position: absolute; 
+    top: 40px; 
+    right: 40px; 
+    border: 0; 
+    background: transparent; 
+    font-size: 24px; 
+    cursor: pointer; 
+  }
+  .fpmi__media {
+    position: relative;
+    overflow: hidden;
+  }
+  .fpmi__media img { 
+    width: 100%; 
+    height: 100%;
+    aspect-ratio: 414/438;
+    object-fit: cover;   
+  }
+  .fpmi__content{
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .fpmi__heading { 
+    margin: 0;
+    color: #05117F;
+    font-size:24px;
+    font-weight: 700;
+  }
+  .fpmi__sub { 
+    margin: 0; 
+    color: #464646;
+    line-height: 24px;
+    font-size: 14px;
+  }
+  .fpmi__product{
+    font-size: 20px;
+  }
+  .fpmi__sub-black {
+    color: #000;
+  }
+  .fpmi__save{
+    color:#05117F;
+    font-size: 18px;
+  }
+
+  .fpmi__list { 
+    list-style: none; 
+    margin: 0;
+    padding: 0; 
+    display: grid; 
+    gap: 12px; 
+    max-height: 360px; 
+    overflow: auto; 
+  }
+  .fpmi-item__row { 
+    display: grid; 
+    grid-template-columns: 88px auto; 
+    align-items: center; 
+    column-gap: 10px; 
+  }
+  
+  .fpmi-item__media{
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+  .fpmi-item__media img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;        
+  }
+  .fpmi-item__title { 
+    display: block; 
+    font-weight: 700; 
+    font-size: 14px;
+    color: #464646;
+  }
+  .fpmi-item__description{
+    margin:0;
+    padding:0;
+  }
+  .fpmi-item__description p{
+    margin:0;
+    padding:0;
+    font-size:12px;
+    line-height: 1;
+    color:#000000;
+  }
+  .fpmi-item__sku { 
+    display: block; 
+    font-size: 12px;
+    color: #666;
+    margin-top: 6px;
+  }
+  .fpmi-item__price { 
+    display: block; 
+    margin-top: 4px; 
+    font-size: 18px;
+    color: #666666;
+    }
+    .price-item--regular{
+      color:#05117F;
+      font-weight: 700;
+    }
+  .fpmi-item__qty input { 
+    width: 72px; 
+  }
+  .fpmi__actions { 
+    display: grid; 
+    grid-template-columns: auto auto;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto; 
+  }
+  .fpmi__actions .button{               
+    min-width: 0;              
+    width: 100%;
+    justify-content: center; 
+    font-size: 16px;
+    font-weight: 700;  
+  }
+
+
+
+  @media (max-width: 750px){ 
+    .fpmi__wrap { 
+      grid-template-columns: 1fr; 
+    } 
+     .fpmi__content{
+      
+      gap: 16px;
+    }
+    .fpmi__media { 
+      order: -1; 
+    }
+    .fpmi__actions{ 
+      
+      grid-template-columns: 1fr; 
+    }
+    .fpmi__actions .button { 
+       width: 100%; 
+    } 
+    }
+</style>
+
 
 {%- liquid
   assign products_to_display = section.settings.collection.all_products_count
@@ -214,10 +385,548 @@
   </div>
 </div>
 
+
+{%- assign fpmi_enabled = section.settings.fpmi_enable -%}
+{%- if fpmi_enabled  -%}
+
+  {%- assign fpmi_heading = section.settings.fpmi_heading | default: 'COMPLETE YOUR PURCHASE' -%}
+  <div class="fpmi-root" data-section-id="{{ section.id }}"
+       data-enabled="true"
+       data-once="{{ section.settings.fpmi_once | default: false }}"
+       data-add-text="{{ section.settings.fpmi_add_btn | default: 'Add to cart' | escape }}"
+       data-continue-text="{{ section.settings.fpmi_continue_btn | default: 'Continue to cart' | escape }}"
+       hidden></div>
+
+  <dialog id="fpmi-{{ section.id }}" class="fpmi color-{{ section.settings.color_scheme }}" aria-label="{{ fpmi_heading | escape }}">
+    <div class="fpmi__wrap">
+      <button type="button" class="fpmi__close" data-fpmi-close aria-label="Close">×</button>
+
+      <div class="fpmi__media">
+        {% assign img = section.settings.fpmi_image %}
+        {% if img == blank and product and product.featured_media %}
+          {% assign img = product.featured_media %}
+        {% endif %}
+        {% if img %}
+          {{ img | image_url: width: 900 | image_tag: loading: 'lazy', alt: product.title }}
+        {% endif %}
+      </div>
+
+      <div class="fpmi__content">
+        <h3 class="fpmi__heading">{{ fpmi_heading }}</h3>
+        <p class="fpmi__sub">
+          You are trying to add <strong class="fpmi__product">{{ product.title }}</strong> to the cart.<br>
+          <span class="fpmi__sub-black">Complete your look and save <strong class="fpmi__save">$0!</strong></span>
+        </p>
+
+
+{%- assign src = section.settings.fpmi_products -%}
+
+{%- if src.value and src.value.products -%}
+  {%- assign all_products = src.value.products -%}
+{%- else -%}
+  {%- assign all_products = src.value | default: src -%}
+{%- endif -%}
+
+<ul class="fpmi__list">
+  {%- assign count = 0 -%}
+  {%- for p in all_products -%}
+    {% if p.id != product.id %}
+      {%- assign v = p.selected_or_first_available_variant -%}
+      <li class="fpmi-item"
+          data-variant-id="{{ v.id }}"
+          data-price="{{ v.price }}"
+          data-compare="{{ v.compare_at_price | default: v.price }}">
+        <div class="fpmi-item__row">
+          <span class="fpmi-item__media">
+            {% if p.featured_media %}
+              {{ p.featured_media | image_url: width: 160 | image_tag: loading: 'lazy', alt: p.title }}
+            {% endif %}
+          </span>
+          <span class="fpmi-item__info">
+            <span class="fpmi-item__title">{{ p.title }}</span>
+            <span class="fpmi-item__description">{{ p.description | strip_html | truncate: 120 }}</span>
+            <span class="fpmi-item__sku">SKU: {{ v.sku }}</span>
+            <span class="fpmi-item__price">
+              <span class="price-item price-item--regular">{{ v.price | money }}</span>
+              {% if v.compare_at_price > v.price %}
+                <s class="price-item price-item--compare">{{ v.compare_at_price | money }}</s>
+              {% endif %}
+            </span>
+          </span>
+        </div>
+        {% unless v.available %}
+          <small class="fpmi-item__na">Sold out</small>
+        {% endunless %}
+      </li>
+
+      {%- assign count = count | plus: 1 -%}
+      {% if count == 2 %}
+        {% break %}
+      {% endif %}
+    {% endif %}
+  {%- endfor -%}
+</ul>
+
+
+        <div class="fpmi__actions">
+          <button type="button" class="button" data-fpmi-add>{{ section.settings.fpmi_add_btn | default: 'Add to cart' }}</button>
+          <button type="button" class="button button--secondary" data-fpmi-continue>{{ section.settings.fpmi_continue_btn | default: 'Continue to the cart' }}</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+
+<script>
+  const isProductPage =
+    /(?:^\/[a-z]{2}(?:-[A-Z]{2})?\/)?(?:collections\/[^/]+\/)?products\/[^/]+\/?$/
+    .test(location.pathname);
+
+  if (isProductPage) (function () {
+    const root  = document.querySelector('.fpmi-root[data-section-id="{{ section.id }}"]');
+    const modal = document.getElementById('fpmi-{{ section.id }}');
+    if (!root || !modal) {
+      return;
+    }
+
+
+    let pendingForm = null;
+    let isBusy = false;
+    const ONCE = String(root.dataset.once || '').toLowerCase() === 'true';
+    const PRODUCT_ID = Number({{ product.id | default: 0 }});
+    const SEEN_KEY   = 'fpmi_seen:' + PRODUCT_ID;
+
+
+    const seenGet = () => { 
+      try { 
+        return localStorage.getItem(SEEN_KEY) === '1'; 
+      } catch(_) { 
+        return false; 
+      } 
+    };
+
+    const seenSet = () => { 
+      try { 
+        localStorage.setItem(SEEN_KEY,'1'); 
+      } catch(_){} 
+    };
+    const seenClear = () => { 
+      try { 
+        localStorage.removeItem(SEEN_KEY); 
+      } catch(_){};
+
+      try { 
+        document.cookie = SEEN_KEY+'=; Max-Age=0; path=/'; 
+      } catch(_){} 
+    };
+
+    if (!ONCE){ 
+      seenClear();
+    }
+
+
+    const qs  = (s, c=document) => c.querySelector(s);
+    const qsa = (s, c=document) => Array.prototype.slice.call(c.querySelectorAll(s));
+    const money = (cents) => {
+      try{
+        if (window.Shopify && Shopify.formatMoney) {
+          return Shopify.formatMoney(cents);
+        }
+        const code = (Shopify && Shopify.currency && Shopify.currency.active) || 'USD';
+
+        return new Intl.NumberFormat(undefined, {style:'currency', currency: code}).format(cents/100);
+      }catch(_){ 
+        return '$' + (cents/100).toFixed(2); 
+      }
+    };
+
+    function isVisible(node){
+      if (!node) {
+        return false;
+      }
+      const el = node.querySelector('.drawer, .drawer__inner, [id^="CartDrawer"]') || node;
+      const cs = window.getComputedStyle(el);
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && cs.opacity !== '0' && el.offsetHeight > 0;
+    }
+
+    const hasContent = (n) => !!n && n.innerHTML && n.innerHTML.trim().length > 30;
+
+    const openModal = () => {
+      if (ONCE && !seenGet()) {
+        seenSet();
+      }
+
+      try { 
+        modal.showModal(); 
+      } catch(_) { 
+        modal.setAttribute('open',''); 
+      }
+      root.hidden = false;
+      updateSavings();
+    };
+
+    const closeModal = () => {
+      try { 
+        modal.close(); 
+      } catch(_) { 
+        modal.removeAttribute('open'); 
+      }
+
+      root.hidden = true;
+    };
+
+    const updateSavings = () => {
+      let save = 0;
+      qsa('.fpmi-item', modal).forEach(li => {
+        const price   = Number(li.getAttribute('data-price')   || 0);
+        const compare = Number(li.getAttribute('data-compare') || 0);
+        if (compare > price) save += (compare - price);
+      });
+
+      const el = qs('.fpmi__save', modal);
+
+      if (el) {
+        el.textContent = money(save);
+      }
+    };
+
+    const getMainVariantId = (form) => {
+      const el = form.elements && form.elements.namedItem ? form.elements.namedItem('id') : form.querySelector('[name="id"]');
+      const id = Number(el && (el.value || el.getAttribute('value') || ''));
+
+      return Number.isFinite(id) && id > 0 ? id : 0;
+    };
+
+    const getUpsellItems = (excludeId) => {
+      const items = [];
+
+      qsa('.fpmi-item', modal).forEach(li => {
+        const id = Number(li.getAttribute('data-variant-id'));
+
+        if (id && id !== excludeId) {
+          items.push({ id, quantity: 1 });
+        }
+      });
+      return items;
+    };
+
+    const addMainViaForm = (form) => {
+      const fd = new FormData(form);
+      if (!fd.has('quantity')) fd.set('quantity','1');
+      const url = form.action || '{{ routes.cart_add_url }}';
+      return fetch(url, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Accept':'application/json' }, body: fd
+      }).then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t || 'main add failed'); }); });
+    };
+
+    const addUpsells = (items) => {
+      if (!items.length) {
+        return Promise.resolve();
+      }
+
+      return fetch('{{ routes.root_url }}cart/add.js', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+        body: JSON.stringify({ items })
+      })
+        .then(r => { if (!r.ok) return r.text()
+        .then(t => { throw new Error(t || 'upsell add failed'); }); 
+      });
+    };
+
+    const updateHeaderBubble = (count) => {
+      const n = String(count);
+
+      qsa('#cart-icon-bubble').forEach(icon => {
+        let bubble = qs('.cart-count-bubble', icon);
+
+        if (count > 0){
+          if (!bubble){
+            bubble = document.createElement('div');
+            bubble.className = 'cart-count-bubble';
+            bubble.innerHTML = '<span aria-hidden="true"></span><span class="visually-hidden"></span>';
+            icon.appendChild(bubble);
+          }
+
+          const vis = qs('span[aria-hidden="true"]', bubble);
+          const sr  = qs('.visually-hidden', bubble);
+
+          if (vis) {
+            vis.textContent = n;
+          }
+
+          if (sr)  {
+            sr.textContent  = n;
+          }
+
+          bubble.removeAttribute('hidden');
+          bubble.classList.remove('hidden','is-empty');
+          bubble.setAttribute('aria-hidden','false');
+        } else if (bubble){ 
+          bubble.remove(); 
+        }
+      });
+
+      qsa('[data-cart-count]').forEach(el => {
+        el.setAttribute('data-cart-count', n);
+        if (!el.textContent.trim()) {
+          el.textContent = n;
+        }
+      });
+      qsa('.cart-count, .site-header__cart-count').forEach(el => el.textContent = n);
+    };
+
+    const getDrawer = () =>
+      document.querySelector('cart-drawer') ||
+      document.getElementById('CartDrawer') ||
+      document.querySelector('#CartDrawer,[id*="CartDrawer"]');
+
+    const getNotif = () => {
+      const wrap = document.getElementById('shopify-section-cart-notification');
+      return (wrap && (wrap.querySelector('cart-notification') || wrap)) ||
+            document.querySelector('cart-notification');
+    };
+
+    function openDrawer(){
+      const drawer = getDrawer();
+
+      if (!drawer) {
+        return false;
+      }
+
+      try { 
+        if (typeof drawer.open === 'function') drawer.open(); } catch(_){}
+        drawer.setAttribute('open','');
+
+        const inner = drawer.querySelector('.drawer, .drawer__inner, [id^="CartDrawer"]');
+        inner && inner.classList.add('active','is-open');
+        drawer.classList && drawer.classList.add('active','is-open');
+        return isVisible(drawer);
+    }
+
+    function openNotif(){
+      let notif =
+        document.querySelector('cart-notification') ||
+        (document.getElementById('shopify-section-cart-notification') &&
+        document.getElementById('shopify-section-cart-notification').querySelector('cart-notification'));
+
+      let host = notif || document.getElementById('shopify-section-cart-notification') ||
+                document.querySelector('#CartNotification,[id*="CartNotification"]');
+
+      if (!host) return false;
+
+      try { 
+        host.setAttribute('open',''); 
+      } catch(_){}
+
+      try { 
+        host.removeAttribute('aria-hidden'); 
+      } catch(_){}
+
+      try { 
+        host.style.removeProperty('display'); 
+      } catch(_){}
+
+      host.classList && host.classList.add('active','is-open','open','visible','shown');
+
+      try { 
+        if (typeof host.open === 'function') {
+          host.open(); 
+        }
+      } catch(_){}
+
+      try { 
+        document.dispatchEvent(new CustomEvent('cart-notification:open')); 
+      } catch(_){}
+
+      return true;
+    }
+
+    const openCartUI = () => { 
+      if (!openDrawer()) {
+        openNotif(); 
+      }
+    };
+
+    function replaceSectionById(id, html){
+      const fresh = new DOMParser().parseFromString(html,'text/html').getElementById(id);
+      const cur = document.getElementById(id);
+
+      if (fresh){
+        document.querySelectorAll('body > cart-drawer, body > #CartDrawer, body > [id^="CartDrawer"]').forEach(n => { try{ n.remove(); } catch(_){} });
+        
+        if (cur) {
+          cur.replaceWith(fresh);
+        }
+        else {
+          document.body.appendChild(fresh);
+        }
+      }
+    }
+
+    function execInlineScripts(container){
+      container.querySelectorAll('script').forEach(scr => {
+        const n = document.createElement('script');
+        
+        if (scr.src) n.src = scr.src;
+        else n.textContent = scr.textContent;
+        Array.from(scr.attributes).forEach(a => n.setAttribute(a.name, a.value));
+        scr.replaceWith(n);
+      });
+    }
+
+    const refreshCartUI = () => {
+      const ts = Date.now();
+
+      fetch('{{ routes.root_url }}cart.js?ts=' + ts, { credentials:'same-origin', cache:'no-store' })
+        .then(r => r.json())
+        .then(cart => {
+          updateHeaderBubble((cart && cart.item_count) || 0);
+          document.dispatchEvent(new CustomEvent('cart:updated', { detail: cart }));
+        })
+        .catch(()=>{});
+
+      const root = (window.Shopify && Shopify.routes && Shopify.routes.root) || '{{ routes.root_url }}';
+      const url = root + '?sections=cart-drawer,cart-notification,cart-icon-bubble'
+                  '&sections_url={{ routes.cart_url | escape }}'
+                  '&ts=' + ts;
+
+        fetch(url, {
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-store',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(r => r.json())
+        .then(sections => {
+          try { 
+            if (sections['cart-drawer']) {
+              replaceSectionById('shopify-section-cart-drawer',        sections['cart-drawer']);
+            }
+          } catch(_){}
+
+          try { 
+            if (sections['cart-notification'])  {
+              replaceSectionById('shopify-section-cart-notification',  sections['cart-notification']); 
+            }
+          } catch(_){}
+
+          try { if (sections['cart-icon-bubble']) {
+            const fresh = new DOMParser().parseFromString(sections['cart-icon-bubble'],'text/html').getElementById('cart-icon-bubble');
+            const cur   = document.getElementById('cart-icon-bubble');
+            if (fresh && cur) cur.replaceWith(fresh);
+          }} catch(_){}
+
+
+          try {
+            const wrapD = document.getElementById('shopify-section-cart-drawer');        if (wrapD) execInlineScripts(wrapD);
+            const wrapN = document.getElementById('shopify-section-cart-notification');  if (wrapN) execInlineScripts(wrapN);
+          } catch(_){}
+
+          requestAnimationFrame(() => {
+            const host = document.querySelector('#shopify-section-cart-drawer');
+            const hasContent = host && host.innerHTML.trim().length > 50;
+            
+            setTimeout(() => {
+              if (hasContent ? !openDrawer() : true) {
+                openNotif();
+              }
+              window.dispatchEvent(new Event('resize'));
+              document.dispatchEvent(new CustomEvent('cart:refresh'));
+            }, 30);
+          });
+        })
+        .catch(() => { openCartUI(); });
+    };
+
+    const FORM_SELECTORS = [
+      'product-form form',
+      '.product-form form',
+      'form[data-type="add-to-cart-form"]',
+      'form[action*="/cart/add"]',
+      'form[id^="ProductForm-"]',
+      'form[id^="product-form-"]'
+    ].join(',');
+
+    const intercept = (form, e) => {
+      e.preventDefault(); 
+      e.stopPropagation();
+      pendingForm = form;
+      openModal();
+    };
+
+    document.addEventListener('submit', (e) => {
+      const form = e.target && e.target.matches && e.target.matches(FORM_SELECTORS) ? e.target : null;
+      if (form) {
+        intercept(form, e);
+      }
+    }, true);
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest && e.target.closest('button[name="add"], button[type="submit"], input[type="submit"], .product-form__submit, [id^="ProductSubmitButton-"]');
+      if (!btn) return;
+      const form = btn.form || btn.closest('form');
+      if (form && form.matches(FORM_SELECTORS)) intercept(form, e);
+    }, true);
+
+
+    modal.addEventListener('click', (e) => {
+      if (e.target.closest('[data-fpmi-close]')) {
+        closeModal();
+      }
+    });
+
+    const addBtn = qs('[data-fpmi-add]', modal);
+    const contBtn = qs('[data-fpmi-continue]', modal);
+
+    addBtn && addBtn.addEventListener('click', () => {
+      if (isBusy || !pendingForm) {
+        return;
+      }
+      isBusy = true;
+      const mainId = getMainVariantId(pendingForm);
+      addMainViaForm(pendingForm)
+        .then(() => addUpsells(getUpsellItems(mainId)))
+        .then(() => { closeModal(); refreshCartUI(); })
+        .catch((err) => { console.error('FPMI addBtn error:', err);  openCartUI(); })
+        .finally(() => { isBusy = false; });
+    });
+
+    contBtn && contBtn.addEventListener('click', () => {
+      if (isBusy || !pendingForm) {
+        return;
+      }
+
+      isBusy = true;
+      addMainViaForm(pendingForm)
+        .then(() => { closeModal(); refreshCartUI(); })
+        .catch((err) => { console.error('FPMI contBtn error:', err); openCartUI(); })
+        .finally(() => { isBusy = false; });
+    });
+
+
+    window.fpmiTestFire = openModal;
+  })();
+</script>
+
+
+
+
+
+
+
+
+{%- endif -%}
+
+
 {% schema %}
 {
   "name": "t:sections.featured-collection.name",
   "tag": "section",
+
   "class": "section",
   "disabled_on": {
     "groups": ["header", "footer"]
@@ -517,7 +1226,54 @@
       "unit": "px",
       "label": "t:sections.all.padding.padding_bottom",
       "default": 36
+    },
+    {
+      "type": "header",
+      "content": "Modal interceptor (only from product page)"
+    },
+    {
+      "type": "checkbox",
+      "id": "fpmi_enable",
+      "label": "Enable modal interceptor on product page",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "fpmi_image",
+      "label": "Modal image (fallbacks to current product image)"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "fpmi_heading",
+      "label": "Heading",
+      "default": "COMPLETE YOUR PURCHASE"
+    },
+    {
+      "type": "checkbox",
+      "id": "fpmi_once",
+      "label": "Show only once per customer (per product)",
+      "default": false
+    },
+    {
+      "type": "product_list",
+      "id": "fpmi_products",
+      "label": "Upsell products to display",
+      "limit": 12
+    },
+    
+    {
+      "type": "text",
+      "id": "fpmi_add_btn",
+      "label": "Add button label",
+      "default": "Add to cart"
+    },
+    {
+      "type": "text",
+      "id": "fpmi_continue_btn",
+      "label": "Continue button label",
+      "default": "Continue to cart"
     }
+
   ],
   "presets": [
     {
